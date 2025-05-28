@@ -8,7 +8,7 @@ from PIL import Image
 from datetime import datetime
 import pytz
 
-st.set_page_config(page_title="Pasiūlymų generatorius V2", layout="wide")
+st.set_page_config(page_title="Pasiūlymų generatorius V2.1", layout="wide")
 
 st.markdown("""
     <style>
@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3 (su formulėmis + dinaminis perstumimas)")
+st.title("📦 Pasiūlymų kūrimo įrankis v3.1 (su koreguotomis formulėmis)")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -127,7 +127,7 @@ else:
         st.session_state.pasirinktu_formuliu_info = []
         st.rerun()
 
-if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su formulėmis ir perstumimu"):
+if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su koreguotomis formulėmis"):
     wb = Workbook()
     ws = wb.active
     df = pd.DataFrame(st.session_state.pasirinktos_eilutes)
@@ -143,14 +143,14 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su for
 
     for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
         for col_idx, value in enumerate(row):
-            cell = ws.cell(row=row_idx + 2, column=col_idx + 1)
+            export_cell = ws.cell(row=row_idx + 2, column=col_idx + 1)
             formula_info = st.session_state.pasirinktu_formuliu_info[row_idx][col_idx]
             if formula_info:
                 original_coord, formula_text = formula_info
-                translated = Translator(formula_text, origin=original_coord).translate_formula(cell.coordinate)
-                cell.value = translated
+                translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
+                export_cell.value = translated
             else:
-                cell.value = value
+                export_cell.value = value
 
     lt_tz = pytz.timezone("Europe/Vilnius")
     now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
