@@ -7,7 +7,7 @@ from PIL import Image
 from datetime import datetime
 import pytz
 
-st.set_page_config(page_title="Pasiūlymų generatorius", layout="wide")
+st.set_page_config(page_title="Pasiūlymų generatorius V2", layout="wide")
 
 st.markdown("""
     <style>
