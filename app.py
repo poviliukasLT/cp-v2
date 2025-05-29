@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3.8 (normalize fix + visos % veikia)")
+st.title("📦 Pasiūlymų kūrimo įrankis v3.9")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -101,9 +101,13 @@ if uploaded_files:
     pasirinktos = st.multiselect("✅ Pasirinkite eilučių numerius:", df.index)
     if st.button("➕ Pridėti pažymėtas"):
         for i in pasirinktos:
-            st.session_state.pasirinktos_eilutes.append(df.iloc[i].tolist())
-            st.session_state.pasirinktu_failu_pavadinimai.append(failo_pav)
-            st.session_state.pasirinktu_formuliu_info.append(formulas[i])
+            eilute = df.iloc[i].tolist()
+            if eilute not in st.session_state.pasirinktos_eilutes:
+                st.session_state.pasirinktos_eilutes.append(eilute)
+                st.session_state.pasirinktu_failu_pavadinimai.append(failo_pav)
+                st.session_state.pasirinktu_formuliu_info.append(formulas[i])
+            else:
+                st.warning(f"Eilutė #{i} jau pridėta ir nebus dubliuojama.")
 
 st.subheader("🧠 Atmintis")
 if not st.session_state.pasirinktos_eilutes:
@@ -123,47 +127,54 @@ else:
         st.session_state.pasirinktu_formuliu_info = []
         st.rerun()
 
-if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su koreguotomis formulėmis"):
-    wb = Workbook()
-    ws = wb.active
-    df = pd.DataFrame(st.session_state.pasirinktos_eilutes)
-    failo_pav = st.session_state.pasirinktu_failu_pavadinimai[0] if st.session_state.pasirinktu_failu_pavadinimai else ""
-    matching_key = None
-    for key in rename_rules:
-        if failo_pav.lower().startswith(key.lower()):
-            matching_key = key
-            break
-    header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(df.shape[1])])
-    header += [""] * (df.shape[1] - len(header))
-    ws.append(header[:df.shape[1]])
+if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pavadinimai:
+    if st.button("📅 Eksportuoti su koreguotomis formulėmis"):
+        wb = Workbook()
+        ws = wb.active
+        df = pd.DataFrame(st.session_state.pasirinktos_eilutes)
+        failo_pav = st.session_state.pasirinktu_failu_pavadinimai[0]
+        matching_key = None
+        for key in rename_rules:
+            if failo_pav.lower().startswith(key.lower()):
+                matching_key = key
+                break
+        header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(df.shape[1])])
+        header += [""] * (df.shape[1] - len(header))
+        ws.append(header[:df.shape[1]])
 
-    raw_proc_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
-    proc_format_names = [normalize(n) for n in raw_proc_names]
-    proc_format_indexes = []
-    if matching_key in ["Sweets", "Snacks_", "Groceries"]:
-        for idx, name in enumerate(header):
-            if normalize(name) in proc_format_names:
-                proc_format_indexes.append(idx)
+        raw_proc_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
+        proc_format_names = [normalize(n) for n in raw_proc_names]
+        proc_format_indexes = []
+        if matching_key in ["Sweets", "Snacks_", "Groceries"]:
+            for idx, name in enumerate(header):
+                if normalize(name) in proc_format_names:
+                    proc_format_indexes.append(idx)
 
-    for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
-        for col_idx, value in enumerate(row):
-            export_cell = ws.cell(row=row_idx + 2, column=col_idx + 1)
-            formula_info = st.session_state.pasirinktu_formuliu_info[row_idx][col_idx]
-            if formula_info:
-                original_coord, formula_text = formula_info
-                translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
-                export_cell.value = translated
-            else:
-                export_cell.value = value
+        for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
+            for col_idx, value in enumerate(row):
+                export_cell = ws.cell(row=row_idx + 2, column=col_idx + 1)
+                formula_info = st.session_state.pasirinktu_formuliu_info[row_idx][col_idx]
+                if formula_info:
+                    original_coord, formula_text = formula_info
+                    translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
+                    export_cell.value = translated
+                else:
+                    export_cell.value = value
 
-            if col_idx in proc_format_indexes:
-                try:
-                    export_cell.value = float(str(export_cell.value).replace(",", "."))
-                    export_cell.number_format = "0.00%"
-                except (ValueError, TypeError):
-                    pass
+                if col_idx in proc_format_indexes:
+                    try:
+                        export_cell.value = float(str(export_cell.value).replace(",", "."))
+                        export_cell.number_format = "0.00%"
+                    except (ValueError, TypeError):
+                        pass
 
-    lt_tz = pytz.timezone("Europe/Vilnius")
-    now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
-    output = BytesIO()
-    wb.save(output)
+        lt_tz = pytz.timezone("Europe/Vilnius")
+        now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
+        output = BytesIO()
+        wb.save(output)
+        st.download_button(
+            label="📅 Atsisiųsti su koreguotomis formulėmis",
+            data=output.getvalue(),
+            file_name=f"pasiulymas_{now_str}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
