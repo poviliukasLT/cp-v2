@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v2.2 (optimizuotas)")
+st.title("📦 Pasiūlymų kūrimo įrankis v2.3 (formulės + % + greitis)")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -132,6 +132,11 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
     header += [""] * (df.shape[1] - len(header))
     ws.append(header[:df.shape[1]])
 
+    proc_format_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
+    proc_format_indexes = []
+    if matching_key in ["Sweets", "Snacks_", "Groceries"]:
+        proc_format_indexes = [i for i, name in enumerate(header) if name in proc_format_names]
+
     for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
         for col_idx, value in enumerate(row):
             export_cell = ws.cell(row=row_idx + 2, column=col_idx + 1)
@@ -142,6 +147,9 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
                 export_cell.value = translated
             else:
                 export_cell.value = value
+
+            if col_idx in proc_format_indexes and isinstance(export_cell.value, (int, float)):
+                export_cell.number_format = "0.00%"
 
     lt_tz = pytz.timezone("Europe/Vilnius")
     now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
