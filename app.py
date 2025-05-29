@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.3")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.3.1")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -56,6 +56,13 @@ rename_rules = {
                   "Margin RSP MIN", "Margin RSP MAX", "Target Margin", "Target offer",
                   "", "AS OF 2025", "CAN up to 0,33l", "CAN over 0,33",
                   "PET up to 0,75l", "PET over 0,75l", "GLASS up to 0,5l", "GLASS over 0,5l"]
+}
+
+proc_format_map = {
+    "Sweets": ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"],
+    "Snacks_": ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"],
+    "Groceries": ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"],
+    "beverages": ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX", "Target margin"]
 }
 
 def normalize(text):
@@ -140,17 +147,17 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
             if failo_pav.lower().startswith(key.lower()):
                 matching_key = key
                 break
+
         header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(df.shape[1])])
         header += [""] * (df.shape[1] - len(header))
         ws.append(header[:df.shape[1]])
 
-        raw_proc_names = ["Target Margin", "Target margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
-        proc_format_names = [normalize(n) for n in raw_proc_names]
+        proc_columns = proc_format_map.get(matching_key, [])
+        proc_format_names = [normalize(n) for n in proc_columns]
         proc_format_indexes = []
-        if matching_key in ["Sweets", "Snacks_", "Groceries", "beverages"]:
-            for idx, name in enumerate(header[:df.shape[1]]):
-                if normalize(name) in proc_format_names:
-                    proc_format_indexes.append(idx)
+        for idx, name in enumerate(header[:df.shape[1]]):
+            if normalize(name) in proc_format_names:
+                proc_format_indexes.append(idx)
 
         for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
             for col_idx, value in enumerate(row):
