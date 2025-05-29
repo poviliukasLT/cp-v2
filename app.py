@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.3.1")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.3.2")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -141,25 +141,23 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         wb = Workbook()
         ws = wb.active
         df = pd.DataFrame(st.session_state.pasirinktos_eilutes)
-        failo_pav = st.session_state.pasirinktu_failu_pavadinimai[0]
-        matching_key = None
-        for key in rename_rules:
-            if failo_pav.lower().startswith(key.lower()):
-                matching_key = key
-                break
-
-        header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(df.shape[1])])
-        header += [""] * (df.shape[1] - len(header))
-        ws.append(header[:df.shape[1]])
-
-        proc_columns = proc_format_map.get(matching_key, [])
-        proc_format_names = [normalize(n) for n in proc_columns]
-        proc_format_indexes = []
-        for idx, name in enumerate(header[:df.shape[1]]):
-            if normalize(name) in proc_format_names:
-                proc_format_indexes.append(idx)
 
         for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
+            failo_pav = st.session_state.pasirinktu_failu_pavadinimai[row_idx]
+            matching_key = None
+            for key in rename_rules:
+                if failo_pav.lower().startswith(key.lower()):
+                    matching_key = key
+                    break
+
+            header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(len(row))])
+            proc_columns = proc_format_map.get(matching_key, [])
+            proc_format_names = [normalize(n) for n in proc_columns]
+            proc_format_indexes = [idx for idx, name in enumerate(header) if normalize(name) in proc_format_names]
+
+            if row_idx == 0:
+                ws.append(header[:len(row)])
+
             for col_idx, value in enumerate(row):
                 export_cell = ws.cell(row=row_idx + 2, column=col_idx + 1)
                 formula_info = st.session_state.pasirinktu_formuliu_info[row_idx][col_idx]
