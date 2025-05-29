@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from openpyxl import load_workbook, Workbook
@@ -8,7 +7,7 @@ from PIL import Image
 from datetime import datetime
 import pytz
 
-st.set_page_config(page_title="Pasiūlymų generatorius V2.1", layout="wide")
+st.set_page_config(page_title="Pasiūlymų generatorius", layout="wide")
 
 st.markdown("""
     <style>
@@ -28,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3.1 (su koreguotomis formulėmis)")
+st.title("📦 Pasiūlymų kūrimo įrankis v2.2 (optimizuotas)")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -58,8 +57,7 @@ rename_rules = {
                   "PET up to 0,75l", "PET over 0,75l", "GLASS up to 0,5l", "GLASS over 0,5l"]
 }
 
-uploaded_files = st.file_uploader("📁 Įkelkite Excel failus:", type="xlsx", accept_multiple_files=True)
-
+@st.cache_data
 def extract_rows_with_metadata(file):
     wb = load_workbook(file, data_only=False)
     data = {}
@@ -81,6 +79,8 @@ def extract_rows_with_metadata(file):
             formulas.append(formula_row)
         data[f"{file.name} -> {sheet_name}"] = (rows, formulas, file.name.split(".")[0])
     return data
+
+uploaded_files = st.file_uploader("📁 Įkelkite Excel failus:", type="xlsx", accept_multiple_files=True)
 
 if uploaded_files:
     all_data = {}
@@ -109,18 +109,9 @@ else:
     pasirinkti_salinimui = st.multiselect("🗑️ Pažymėkite eilutes pašalinimui:", df_memory.index)
     col1, col2 = st.columns(2)
     if col1.button("❌ Pašalinti pažymėtas"):
-        st.session_state.pasirinktos_eilutes = [
-            r for i, r in enumerate(st.session_state.pasirinktos_eilutes)
-            if i not in pasirinkti_salinimui
-        ]
-        st.session_state.pasirinktu_failu_pavadinimai = [
-            n for i, n in enumerate(st.session_state.pasirinktu_failu_pavadinimai)
-            if i not in pasirinkti_salinimui
-        ]
-        st.session_state.pasirinktu_formuliu_info = [
-            f for i, f in enumerate(st.session_state.pasirinktu_formuliu_info)
-            if i not in pasirinkti_salinimui
-        ]
+        st.session_state.pasirinktos_eilutes = [r for i, r in enumerate(st.session_state.pasirinktos_eilutes) if i not in pasirinkti_salinimui]
+        st.session_state.pasirinktu_failu_pavadinimai = [n for i, n in enumerate(st.session_state.pasirinktu_failu_pavadinimai) if i not in pasirinkti_salinimui]
+        st.session_state.pasirinktu_formuliu_info = [f for i, f in enumerate(st.session_state.pasirinktu_formuliu_info) if i not in pasirinkti_salinimui]
     if col2.button("🧹 Išvalyti viską"):
         st.session_state.pasirinktos_eilutes = []
         st.session_state.pasirinktu_failu_pavadinimai = []
