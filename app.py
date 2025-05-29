@@ -41,15 +41,15 @@ rename_rules = {
     "Sweets": ["", "Product code", "Product name", "Purchasing price", "Label",
                "Price with costs", "Target Margin", "Target offer", "VAT",
                "Offer with VAT", "RSP MIN", "RSP MAX", "Margin RSP MIN", "Margin RSP MAX",
-               "", "Target Margin", "Target offer"],
+               "Target Margin", "Target offer"],
     "Snacks_": ["", "Product code", "Product name", "Purchasing price", "Label",
                 "Price with costs", "Target Margin", "Target offer", "VAT",
                 "Offer with VAT", "RSP MIN", "RSP MAX", "Margin RSP MIN", "Margin RSP MAX",
-                "", "Target Margin", "Target offer"],
+                "Target Margin", "Target offer"],
     "Groceries": ["", "Product code", "Product name", "Purchasing price", "Label",
                   "Price with costs", "Target Margin", "Target offer", "VAT",
                   "Offer with VAT", "RSP MIN", "RSP MAX", "Margin RSP MIN", "Margin RSP MAX",
-                  "", "Target Margin", "Target offer"],
+                  "Target Margin", "Target offer"],
     "beverages": ["Country", "Product code", "Product name", "Purchasing price", "Label",
                   "Deposit (if needed)", "Sugar Tax", "Price with costs", "Target Margin",
                   "Target offer", "VAT", "Offer with VAT", "RSP MIN", "RSP MAX",
@@ -164,7 +164,7 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
 
             header_row = header[:]
             if matching_key != "beverages" and is_beverages_included:
-                header_row = header_row[:5] + ["", ""] + header_row[5:]
+                header_row = header_row[:5] + ["", ""] + header_row[5:14] + header_row[15:]  # remove empty column before Target Margin
 
             for col_idx, val in enumerate(header_row):
                 ws.cell(row=row_pointer, column=col_idx + 1).value = val
@@ -174,8 +174,8 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
                 adjusted_row = row_data[:]
                 adjusted_formula = formula_row[:]
                 if matching_key != "beverages" and is_beverages_included:
-                    adjusted_row = adjusted_row[:5] + [None, None] + adjusted_row[5:]
-                    adjusted_formula = adjusted_formula[:5] + [None, None] + adjusted_formula[5:]
+                    adjusted_row = adjusted_row[:5] + [None, None] + adjusted_row[5:14] + adjusted_row[15:]
+                    adjusted_formula = adjusted_formula[:5] + [None, None] + adjusted_formula[5:14] + adjusted_formula[15:]
 
                 for col_idx, value in enumerate(adjusted_row):
                     export_cell = ws.cell(row=row_pointer, column=col_idx + 1)
