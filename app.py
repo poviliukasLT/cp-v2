@@ -6,6 +6,7 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime
 import pytz
+import unicodedata
 
 st.set_page_config(page_title="Pasiūlymų generatorius", layout="wide")
 
@@ -27,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.2")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.3")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -60,7 +61,8 @@ rename_rules = {
 def normalize(text):
     if not isinstance(text, str):
         return ""
-    return "".join(text.lower().strip().split())
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(text.lower().strip().replace("\u00a0", "").split())
 
 @st.cache_data
 def extract_rows_with_metadata(file):
@@ -142,7 +144,7 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         header += [""] * (df.shape[1] - len(header))
         ws.append(header[:df.shape[1]])
 
-        raw_proc_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX", "Target margin"]
+        raw_proc_names = ["Target Margin", "Target margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
         proc_format_names = [normalize(n) for n in raw_proc_names]
         proc_format_indexes = []
         if matching_key in ["Sweets", "Snacks_", "Groceries", "beverages"]:
