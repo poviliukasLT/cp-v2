@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3.7 (normalize + % + formulės)")
+st.title("📦 Pasiūlymų kūrimo įrankis v3.8 (normalize fix + visos % veikia)")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -57,7 +57,6 @@ rename_rules = {
                   "PET up to 0,75l", "PET over 0,75l", "GLASS up to 0,5l", "GLASS over 0,5l"]
 }
 
-# Normalizuoja stulpelių vardus palyginimui
 def normalize(text):
     if not isinstance(text, str):
         return ""
@@ -138,7 +137,8 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
     header += [""] * (df.shape[1] - len(header))
     ws.append(header[:df.shape[1]])
 
-    proc_format_names = ["target margin", "vat", "margin rsp min", "margin rsp max"]
+    raw_proc_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
+    proc_format_names = [normalize(n) for n in raw_proc_names]
     proc_format_indexes = []
     if matching_key in ["Sweets", "Snacks_", "Groceries"]:
         for idx, name in enumerate(header):
@@ -167,9 +167,3 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
     now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
     output = BytesIO()
     wb.save(output)
-    st.download_button(
-        label="📥 Atsisiųsti su koreguotomis formulėmis",
-        data=output.getvalue(),
-        file_name=f"pasiulymas_{now_str}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
