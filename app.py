@@ -135,7 +135,10 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
     proc_format_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
     proc_format_indexes = []
     if matching_key in ["Sweets", "Snacks_", "Groceries"]:
-        proc_format_indexes = [i for i, name in enumerate(header) if name in proc_format_names]
+proc_format_indexes = []
+for idx, name in enumerate(header):
+    if name.strip() in proc_format_names:
+        proc_format_indexes.append(idx)
 
     for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
         for col_idx, value in enumerate(row):
