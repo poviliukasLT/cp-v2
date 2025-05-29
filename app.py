@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3.5 (formulės + % fix + našumas)")
+st.title("📦 Pasiūlymų kūrimo įrankis v3.6 (formulės + % fix + string į float)")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -150,8 +150,12 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
             else:
                 export_cell.value = value
 
-            if col_idx in proc_format_indexes and isinstance(export_cell.value, (int, float)):
-                export_cell.number_format = "0.00%"
+            if col_idx in proc_format_indexes:
+                try:
+                    export_cell.value = float(export_cell.value)
+                    export_cell.number_format = "0.00%"
+                except (ValueError, TypeError):
+                    pass
 
     lt_tz = pytz.timezone("Europe/Vilnius")
     now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
