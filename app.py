@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3.9")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.0")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -146,7 +146,7 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         proc_format_names = [normalize(n) for n in raw_proc_names]
         proc_format_indexes = []
         if matching_key in ["Sweets", "Snacks_", "Groceries"]:
-            for idx, name in enumerate(header):
+            for idx, name in enumerate(header[:df.shape[1]]):
                 if normalize(name) in proc_format_names:
                     proc_format_indexes.append(idx)
 
