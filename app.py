@@ -141,14 +141,12 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         wb = Workbook()
         ws = wb.active
 
-        # Sukuriam pilną bendrą header'į pagal visus rename_rules
         all_headers = []
         for rules in rename_rules.values():
             all_headers.extend(rules)
         final_header = []
-        [final_header.append(h) for h in all_headers if h not in final_header]  # remove duplicates
+        [final_header.append(h) for h in all_headers if h not in final_header]
 
-        # Įrašom bendrą header eilutę
         for col_idx, val in enumerate(final_header):
             ws.cell(row=1, column=col_idx + 1).value = val
 
@@ -173,10 +171,13 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
                     source_idx = header.index(final_col_name)
                     export_cell = ws.cell(row=row_pointer, column=target_col_idx + 1)
                     formula_info = formula_row[source_idx] if source_idx < len(formula_row) else None
-                    if formula_info:
-                        original_coord, formula_text = formula_info
-                        translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
-                        export_cell.value = translated
+                    if formula_info and isinstance(formula_info, tuple) and all(formula_info):
+                        try:
+                            original_coord, formula_text = formula_info
+                            translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
+                            export_cell.value = translated
+                        except Exception:
+                            export_cell.value = None
                     else:
                         if source_idx < len(row_data):
                             export_cell.value = row_data[source_idx]
