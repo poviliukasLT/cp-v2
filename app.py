@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.0")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.1")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -162,11 +162,7 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
                     export_cell.value = value
 
                 if col_idx in proc_format_indexes:
-                    try:
-                        export_cell.value = float(str(export_cell.value).replace(",", "."))
-                        export_cell.number_format = "0.00%"
-                    except (ValueError, TypeError):
-                        pass
+                    export_cell.number_format = "0.00%"
 
         lt_tz = pytz.timezone("Europe/Vilnius")
         now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
