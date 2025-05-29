@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.1")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.2")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -52,7 +52,7 @@ rename_rules = {
     "beverages": ["Country", "Product code", "Product name", "Purchasing price", "Label",
                   "Deposit (if needed)", "Sugar Tax", "Price with costs", "Target Margin",
                   "Target offer", "VAT", "Offer with VAT", "RSP MIN", "RSP MAX",
-                  "Margins RSP MIN", "Margins RSP MAX", "Target Margin", "Target offer",
+                  "Margin RSP MIN", "Margin RSP MAX", "Target Margin", "Target offer",
                   "", "AS OF 2025", "CAN up to 0,33l", "CAN over 0,33",
                   "PET up to 0,75l", "PET over 0,75l", "GLASS up to 0,5l", "GLASS over 0,5l"]
 }
@@ -142,10 +142,10 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         header += [""] * (df.shape[1] - len(header))
         ws.append(header[:df.shape[1]])
 
-        raw_proc_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
+        raw_proc_names = ["Target Margin", "VAT", "Margin RSP MIN", "Margin RSP MAX", "Target margin"]
         proc_format_names = [normalize(n) for n in raw_proc_names]
         proc_format_indexes = []
-        if matching_key in ["Sweets", "Snacks_", "Groceries"]:
+        if matching_key in ["Sweets", "Snacks_", "Groceries", "beverages"]:
             for idx, name in enumerate(header[:df.shape[1]]):
                 if normalize(name) in proc_format_names:
                     proc_format_indexes.append(idx)
