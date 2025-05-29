@@ -27,7 +27,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v3.6 (formulės + % fix + string į float)")
+st.title("📦 Pasiūlymų kūrimo įrankis v3.7 (normalize + % + formulės)")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -56,6 +56,12 @@ rename_rules = {
                   "", "AS OF 2025", "CAN up to 0,33l", "CAN over 0,33",
                   "PET up to 0,75l", "PET over 0,75l", "GLASS up to 0,5l", "GLASS over 0,5l"]
 }
+
+# Normalizuoja stulpelių vardus palyginimui
+def normalize(text):
+    if not isinstance(text, str):
+        return ""
+    return "".join(text.lower().strip().split())
 
 @st.cache_data
 def extract_rows_with_metadata(file):
@@ -136,7 +142,7 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
     proc_format_indexes = []
     if matching_key in ["Sweets", "Snacks_", "Groceries"]:
         for idx, name in enumerate(header):
-            if name and name.strip().lower() in proc_format_names:
+            if normalize(name) in proc_format_names:
                 proc_format_indexes.append(idx)
 
     for row_idx, row in enumerate(st.session_state.pasirinktos_eilutes):
@@ -152,7 +158,7 @@ if st.session_state.pasirinktos_eilutes and st.button("⬇️ Eksportuoti su kor
 
             if col_idx in proc_format_indexes:
                 try:
-                    export_cell.value = float(export_cell.value)
+                    export_cell.value = float(str(export_cell.value).replace(",", "."))
                     export_cell.number_format = "0.00%"
                 except (ValueError, TypeError):
                     pass
