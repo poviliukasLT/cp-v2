@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.6")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.6-patched")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -165,21 +165,26 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
             row_pointer += 1
 
             for row_data, formula_row in eilutes_info:
-                for col_idx, value in enumerate(row_data):
+                adjusted_row = row_data[:]
+                adjusted_formula = formula_row[:]
+                if matching_key != "beverages" and any(f.lower().startswith("beverages") for f in grouped):
+                    adjusted_row = adjusted_row[:5] + [None, None] + adjusted_row[5:]
+                    adjusted_formula = adjusted_formula[:5] + [None, None] + adjusted_formula[5:]
+
+                for col_idx, value in enumerate(adjusted_row):
                     export_cell = ws.cell(row=row_pointer, column=col_idx + 1)
-                    formula_info = formula_row[col_idx]
+                    formula_info = adjusted_formula[col_idx] if col_idx < len(adjusted_formula) else None
                     if formula_info:
                         original_coord, formula_text = formula_info
                         translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
                         export_cell.value = translated
                     else:
                         export_cell.value = value
-
                     if col_idx in proc_format_indexes:
                         export_cell.number_format = "0.00%"
                 row_pointer += 1
 
-            row_pointer += 1  # tuščia eilutė tarp blokų
+            row_pointer += 1
 
         lt_tz = pytz.timezone("Europe/Vilnius")
         now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
