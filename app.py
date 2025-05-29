@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v2.10")
+st.title("📦 Pasiūlymų kūrimo įrankis v2.8")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -41,15 +41,15 @@ rename_rules = {
     "Sweets": ["", "Product code", "Product name", "Purchasing price", "Label",
                "Price with costs", "Target Margin", "Target offer", "VAT",
                "Offer with VAT", "RSP MIN", "RSP MAX", "Margin RSP MIN", "Margin RSP MAX",
-               "Target Margin", "Target offer"],
+               "", "Target Margin", "Target offer"],
     "Snacks_": ["", "Product code", "Product name", "Purchasing price", "Label",
                 "Price with costs", "Target Margin", "Target offer", "VAT",
                 "Offer with VAT", "RSP MIN", "RSP MAX", "Margin RSP MIN", "Margin RSP MAX",
-                "Target Margin", "Target offer"],
+                "", "Target Margin", "Target offer"],
     "Groceries": ["", "Product code", "Product name", "Purchasing price", "Label",
                   "Price with costs", "Target Margin", "Target offer", "VAT",
                   "Offer with VAT", "RSP MIN", "RSP MAX", "Margin RSP MIN", "Margin RSP MAX",
-                  "Target Margin", "Target offer"],
+                  "", "Target Margin", "Target offer"],
     "beverages": ["Country", "Product code", "Product name", "Purchasing price", "Label",
                   "Deposit (if needed)", "Sugar Tax", "Price with costs", "Target Margin",
                   "Target offer", "VAT", "Offer with VAT", "RSP MIN", "RSP MAX",
@@ -148,7 +148,6 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
             grouped[failas].append((st.session_state.pasirinktos_eilutes[i], st.session_state.pasirinktu_formuliu_info[i]))
 
         row_pointer = 1
-        is_beverages_included = any(f.lower().startswith("beverages") for f in grouped)
 
         for failas, eilutes_info in grouped.items():
             matching_key = None
@@ -162,24 +161,14 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
             proc_format_names = [normalize(n) for n in proc_columns]
             proc_format_indexes = [idx for idx, name in enumerate(header) if normalize(name) in proc_format_names]
 
-            header_row = header[:]
-            if matching_key != "beverages" and is_beverages_included:
-                header_row = header_row[:5] + ["", ""] + header_row[5:]
-
-            for col_idx, val in enumerate(header_row):
+            for col_idx, val in enumerate(header):
                 ws.cell(row=row_pointer, column=col_idx + 1).value = val
             row_pointer += 1
 
             for row_data, formula_row in eilutes_info:
-                adjusted_row = row_data[:]
-                adjusted_formula = formula_row[:]
-                if matching_key != "beverages" and is_beverages_included:
-                    adjusted_row = adjusted_row[:5] + [None, None] + adjusted_row[5:]
-                    adjusted_formula = adjusted_formula[:5] + [None, None] + adjusted_formula[5:]
-
-                for col_idx, value in enumerate(adjusted_row):
+                for col_idx, value in enumerate(row_data):
                     export_cell = ws.cell(row=row_pointer, column=col_idx + 1)
-                    formula_info = adjusted_formula[col_idx] if col_idx < len(adjusted_formula) else None
+                    formula_info = formula_row[col_idx]
                     if formula_info:
                         original_coord, formula_text = formula_info
                         translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
