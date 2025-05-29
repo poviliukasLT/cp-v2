@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.4.1")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.5")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -136,55 +136,57 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         raw_proc_names = ["Target Margin", "Target margin", "VAT", "Margin RSP MIN", "Margin RSP MAX"]
         proc_format_names = [normalize(n) for n in raw_proc_names]
 
-        grouped = {}
-        for i, failas in enumerate(st.session_state.pasirinktu_failu_pavadinimai):
-            if failas not in grouped:
-                grouped[failas] = []
-            grouped[failas].append((st.session_state.pasirinktos_eilutes[i], st.session_state.pasirinktu_formuliu_info[i]))
+        df_final = pd.DataFrame()
+        pasirinktos_unikalios = pd.DataFrame(st.session_state.pasirinktos_eilutes)
+        pasirinktos_unikalios['Failas'] = st.session_state.pasirinktu_failu_pavadinimai
+        pasirinktos_formules = st.session_state.pasirinktu_formuliu_info
+        pasirinktos_unikalios['Formules'] = pasirinktos_formules
 
-        for failas, eilutes_info in grouped.items():
+        for failas, grupė in pasirinktos_unikalios.groupby('Failas'):
             matching_key = None
             for key in rename_rules:
                 if failas.lower().startswith(key.lower()):
                     matching_key = key
                     break
 
-            header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(len(eilutes_info[0][0]))])
-            header += [""] * (len(eilutes_info[0][0]) - len(header))
+            df = grupė.drop(columns=['Failas', 'Formules']).copy()
+            formulas = grupė['Formules'].tolist()
 
-            # pridedame header
-            ws.append(header[:len(eilutes_info[0][0])])
+            raw_names = rename_rules.get(matching_key, [f"Column {i}" for i in range(df.shape[1])])
+            num_cols = df.shape[1]
+            header_names = raw_names[:num_cols] + [""] * (num_cols - len(raw_names[:num_cols]))
 
-            proc_format_indexes = []
-            if matching_key in ["Sweets", "Snacks_", "Groceries", "beverages"]:
-                for idx, name in enumerate(header[:len(eilutes_info[0][0])]):
-                    if normalize(name) in proc_format_names:
-                        proc_format_indexes.append(idx)
+            header_df = pd.DataFrame([header_names])
+            df.columns = list(range(num_cols))
+            header_df.columns = df.columns
+            tarpas = pd.DataFrame([[pd.NA]*num_cols], columns=df.columns)
 
-            for row_idx, (row, formula_row) in enumerate(eilutes_info):
-                for col_idx, value in enumerate(row):
-                    export_cell = ws.cell(row=ws.max_row + 1, column=col_idx + 1)
-                    formula_info = formula_row[col_idx]
-                    if formula_info:
-                        original_coord, formula_text = formula_info
-                        translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
-                        export_cell.value = translated
-                    else:
-                        export_cell.value = value
+            blokas = pd.concat([header_df, df, tarpas], ignore_index=True)
+            df_final = pd.concat([df_final, blokas], ignore_index=True)
 
-                    if col_idx in proc_format_indexes:
-                        export_cell.number_format = "0.00%"
+        with pd.ExcelWriter(BytesIO(), engine="openpyxl") as writer:
+            df_final.to_excel(writer, index=False, header=False)
+            output = writer.book
+            ws = output.active
 
-            # pridedame tuščią eilutę tarp blokų
-            ws.append([None] * len(header))
+            row_counter = 2
+            for row in ws.iter_rows(min_row=2):
+                for cell in row:
+                    if cell.value is not None and isinstance(cell.value, str) and cell.value.startswith("="):
+                        cell.data_type = "f"
 
-        lt_tz = pytz.timezone("Europe/Vilnius")
-        now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
-        output = BytesIO()
-        wb.save(output)
-        st.download_button(
-            label="📅 Atsisiųsti su koreguotomis formulėmis",
-            data=output.getvalue(),
-            file_name=f"pasiulymas_{now_str}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            for col_idx, cell in enumerate(ws[1], 1):
+                if normalize(cell.value) in proc_format_names:
+                    for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
+                        for c in row:
+                            c.number_format = "0.00%"
+
+            buf = BytesIO()
+            output.save(buf)
+            buf.seek(0)
+            st.download_button(
+                label="📅 Atsisiųsti su koreguotomis formulėmis",
+                data=buf,
+                file_name=f"pasiulymas_{datetime.now(pytz.timezone('Europe/Vilnius')).strftime('%Y-%m-%d_%H-%M')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
