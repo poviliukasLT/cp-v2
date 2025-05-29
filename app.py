@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.6-patched")
+st.title("📦 Pasiūlymų kūrimo įrankis v2.10")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -137,7 +137,7 @@ else:
         st.rerun()
 
 if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pavadinimai:
-    if st.button("📅 Eksportuoti su koreguotomis formulėmis"):
+    if st.button("📅 Generuoti pasiūlymą"):
         wb = Workbook()
         ws = wb.active
 
@@ -165,8 +165,6 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
             header_row = header[:]
             if matching_key != "beverages" and is_beverages_included:
                 header_row = header_row[:5] + ["", ""] + header_row[5:]
-                if "" in header_row:
-                    header_row.remove("")
 
             for col_idx, val in enumerate(header_row):
                 ws.cell(row=row_pointer, column=col_idx + 1).value = val
@@ -177,11 +175,7 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
                 adjusted_formula = formula_row[:]
                 if matching_key != "beverages" and is_beverages_included:
                     adjusted_row = adjusted_row[:5] + [None, None] + adjusted_row[5:]
-                    if "" in adjusted_row:
-                        adjusted_row.remove("")
                     adjusted_formula = adjusted_formula[:5] + [None, None] + adjusted_formula[5:]
-                    if "" in adjusted_formula:
-                        adjusted_formula.remove("")
 
                 for col_idx, value in enumerate(adjusted_row):
                     export_cell = ws.cell(row=row_pointer, column=col_idx + 1)
@@ -203,7 +197,7 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         output = BytesIO()
         wb.save(output)
         st.download_button(
-            label="📅 Atsisiųsti su koreguotomis formulėmis",
+            label="📅 Atsisiųsti",
             data=output.getvalue(),
             file_name=f"pasiulymas_{now_str}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
