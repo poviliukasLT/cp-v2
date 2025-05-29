@@ -28,7 +28,7 @@ st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 st.image(logo, width=300)
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("📦 Pasiūlymų kūrimo įrankis v4.6")
+st.title("📦 Pasiūlymų kūrimo įrankis v4.7")
 
 if 'pasirinktos_eilutes' not in st.session_state:
     st.session_state.pasirinktos_eilutes = []
@@ -141,45 +141,48 @@ if st.session_state.pasirinktos_eilutes and st.session_state.pasirinktu_failu_pa
         wb = Workbook()
         ws = wb.active
 
-        grouped = {}
-        for i, failas in enumerate(st.session_state.pasirinktu_failu_pavadinimai):
-            if failas not in grouped:
-                grouped[failas] = []
-            grouped[failas].append((st.session_state.pasirinktos_eilutes[i], st.session_state.pasirinktu_formuliu_info[i]))
+        # Sukuriam pilną bendrą header'į pagal visus rename_rules
+        all_headers = []
+        for rules in rename_rules.values():
+            all_headers.extend(rules)
+        final_header = []
+        [final_header.append(h) for h in all_headers if h not in final_header]  # remove duplicates
 
-        row_pointer = 1
-        for failas, eilutes_info in grouped.items():
+        # Įrašom bendrą header eilutę
+        for col_idx, val in enumerate(final_header):
+            ws.cell(row=1, column=col_idx + 1).value = val
+
+        row_pointer = 2
+        for i, row_data in enumerate(st.session_state.pasirinktos_eilutes):
+            failas = st.session_state.pasirinktu_failu_pavadinimai[i]
+            formula_row = st.session_state.pasirinktu_formuliu_info[i]
+
             matching_key = None
             for key in rename_rules:
                 if failas.lower().startswith(key.lower()):
                     matching_key = key
                     break
 
-            header = rename_rules.get(matching_key, [f"Column {i+1}" for i in range(len(eilutes_info[0][0]))])
+            header = rename_rules.get(matching_key, [])
             proc_columns = proc_format_map.get(matching_key, [])
             proc_format_names = [normalize(n) for n in proc_columns]
             proc_format_indexes = [idx for idx, name in enumerate(header) if normalize(name) in proc_format_names]
 
-            for col_idx, val in enumerate(header):
-                ws.cell(row=row_pointer, column=col_idx + 1).value = val
-            row_pointer += 1
-
-            for row_data, formula_row in eilutes_info:
-                for col_idx, value in enumerate(row_data):
-                    export_cell = ws.cell(row=row_pointer, column=col_idx + 1)
-                    formula_info = formula_row[col_idx]
+            for target_col_idx, final_col_name in enumerate(final_header):
+                if final_col_name in header:
+                    source_idx = header.index(final_col_name)
+                    export_cell = ws.cell(row=row_pointer, column=target_col_idx + 1)
+                    formula_info = formula_row[source_idx] if source_idx < len(formula_row) else None
                     if formula_info:
                         original_coord, formula_text = formula_info
                         translated = Translator(formula_text, origin=original_coord).translate_formula(export_cell.coordinate)
                         export_cell.value = translated
                     else:
-                        export_cell.value = value
-
-                    if col_idx in proc_format_indexes:
+                        if source_idx < len(row_data):
+                            export_cell.value = row_data[source_idx]
+                    if source_idx in proc_format_indexes:
                         export_cell.number_format = "0.00%"
-                row_pointer += 1
-
-            row_pointer += 1  # tuščia eilutė tarp blokų
+            row_pointer += 1
 
         lt_tz = pytz.timezone("Europe/Vilnius")
         now_str = datetime.now(lt_tz).strftime("%Y-%m-%d_%H-%M")
